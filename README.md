@@ -5,7 +5,7 @@ XXX.js is an error rich schema validation library intended for use in debugging 
 ```js
 const validator = new Validator({
     type:"object",
-    mandatory:{
+    required:{
         "id":{type:"number"},
         "name":{type:"string",match:/^[a-zA-Z]+\ [a-zA-Z]+$/}
     },
@@ -17,19 +17,20 @@ const validator = new Validator({
             repeat:true,
             pattern:[
                 {type:"string"},
-                {type:"number"},
+                [{type:"number"},{type:"bigint"}],
                 "+"
             ]
         }
     },
-    any:{type:"string"}
+    others:{type:"string"}
 });
 
 console.log(validator.validate({
     id: 53,
     name: "Barack Obama",
     age: 61,
-    houses: ["New York",5,3,1,2,"Los Angeles",2,6,6,4,3]
+    houses: ["New York",5,3,1,2,"Los Angeles",2,14513451234123n,6,3],
+    buffer: new Uint8Array(500)
 }));
 // Result:
 // true
@@ -51,8 +52,7 @@ console.log(validator.validate({
 
 console.log(validator.validate({
     id: 55,
-    name: "Alan Bartlett Shepard Jr.",
-    buffer: new Uint8Array(500),
+    name: "Alan Bartlett Shepard Jr."
 }));
 // Result:
 // ValidatorError {
@@ -66,13 +66,13 @@ console.log(validator.validate({
 console.log(validator.validate({
     id: 56,
     name: "Ken Wins",
-    houses: ["Albuquerque",3,2,1,145134513423412341234123n]
+    houses: ["Albuquerque",3,2,1,true]
 }));
 // Result:
 // ValidatorError {
-//   msg: 'Expected a string, but got a bigint instead',
+//   msg: 'Expected a string, but got a boolean instead',
 //   path: '.houses[4]',
-//   target: 145134513423412341234123n,
+//   target: true,
 //   context: 'string'
 // }
 ```
