@@ -115,9 +115,9 @@ class Object_Validator extends Base_Validator{
         this.props_any = newValidator(ap);
     }
     static aliases = {
-        props_any:"any",
-        props_mandatory:["mandatory","required"],
-        props_optional:["optional","props"]
+        props_any:["any", "others"],
+        props_mandatory:["mandatory", "required"],
+        props_optional:["optional", "props"]
     };
     getInclusiveness(options){
         if("inclusive" in options){
