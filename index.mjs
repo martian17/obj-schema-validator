@@ -1,38 +1,6 @@
-const objSizeAtMost = function(obj,size){
-    let cnt = 0;
-    for(let key in obj){
-        cnt++;
-        if(cnt > size)return false;
-    }
-    return true;
+const getClassName = function(obj){
+    return obj.name || (obj+"");
 };
-
-//error based validator class
-/*
-class ValidatorError extends Error{
-    name = "ValidatorError";
-    constructor(msg,target,context){
-        super(msg);
-        this.target = target;
-        this.context = context;
-    }
-    path = [];
-    addPath(ctx,literal){
-        const {path} = this;
-        if(literal){
-            push(ctx);
-        }
-        if(typeof ctx === "number"){
-            path.push(`[${ctx}]`);
-        }else if(typeof ctx === "string"){
-            if(ctx.match(/^[a-zA-Z_][a-zA-Z_0-9]*$/)){
-                path.push("."+ctx);
-            }else{
-                path.push(`[${ctx}]`);
-            }
-        }
-    }
-};*/
 
 
 class ValidatorError{
@@ -63,9 +31,6 @@ class ValidatorError{
     }
 };
 
-const getClassName = function(obj){
-    return obj.name || (obj+"");
-};
 
 class Base_Validator{
     constructor(rule){
@@ -86,7 +51,6 @@ class Base_Validator{
             this.custom = rule.custom;
             this.validate_inner = this.validate;
             this.validate = function(obj){
-                console.log("custom validator with ",obj);
                 let res;
                 if((res = this.validate_inner(obj)) === true){
                     res = this.custom(obj);
