@@ -1,5 +1,5 @@
 # Object Schema Validator
-This module was made to flexibly match and validate generic json and javascript objects that may contain arbitrary values including class instances, optional or non-deterministic object properties, and mixed type arrays with repeating patterns. It provides validators for object, array and string that you can customize. You can also configure the validator to match certain type or instance of some class. If you need more flexibility, it is also possible to define a custom callback.
+XXX.js is an error rich schema validation library intended for use in debugging and reverse engineering. It supports a similar syntax supported by Mongoose and Ajv JSON schema validator, and custom options for types listed below. The difference is that for each error, you get an object describing the object path and the context alongside with the error message. This library also supports custom user defined callbacks to validate objects and class instances flexibly.
 
 ## Example
 ```js
@@ -11,9 +11,10 @@ const validator = new Validator({
     },
     optional:{
         "age":{type:"number", custom:n => n>10},
-        "buffer":{type:Uint8Array, custom:buff => buff.length<1000}
+        "buffer":{type:Uint8Array, custom:buff => buff.length<1000},
         "houses":{
             type:"array",
+            repeat:true,
             pattern:[
                 {type:"string"},
                 {type:"number"},
@@ -22,32 +23,58 @@ const validator = new Validator({
         }
     },
     any:{type:"string"}
-    //option.any will activate option.inclusive
-    //otherwise the match will be strict
 });
 
-validator.validate({
+console.log(validator.validate({
     id: 53,
     name: "Barack Obama",
-    age: 61
-});
-// true
-
-validator.validate({
-    id: 55,
-    name: "Alan Shepard",
-    buffer: new Uint8Array(500),
+    age: 61,
     houses: ["New York",5,3,1,2,"Los Angeles",2,6,6,4,3]
-});
+}));
+// Result:
 // true
 
-validator.validate({
-    id: 59,
-    name: "Ken Wins"
+
+console.log(validator.validate({
+    id: 54,
+    name: "Noah Jenkins",
+    age: 6
+}));
+// Result:
+// ValidatorError {
+//   msg: 'Custom validation failed',
+//   path: '.age',
+//   target: 6,
+//   context: 'n => n>10'
+// }
+
+
+console.log(validator.validate({
+    id: 55,
+    name: "Alan Bartlett Shepard Jr.",
+    buffer: new Uint8Array(500),
+}));
+// Result:
+// ValidatorError {
+//   msg: 'String does not match the pattern',
+//   path: '.name',
+//   target: 'Alan Bartlett Shepard Jr.',
+//   context: /^[a-zA-Z]+\ [a-zA-Z]+$/
+// }
+
+
+console.log(validator.validate({
+    id: 56,
+    name: "Ken Wins",
     houses: ["Albuquerque",3,2,1,145134513423412341234123n]
-});
-// 145134513423412341234123n
-// Uncaught Error, Value type not of Number
+}));
+// Result:
+// ValidatorError {
+//   msg: 'Expected a string, but got a bigint instead',
+//   path: '.houses[4]',
+//   target: 145134513423412341234123n,
+//   context: 'string'
+// }
 ```
 
 ## Basic syntax
@@ -57,6 +84,9 @@ const validator = new Validator({
     ... //other options depending on the types
 });
 ```
+
+# Documentation
+Documentation is in WIP, and may not match the implementation
 
 ## Validator
 `Validator` is a constructor for the `Validator` class. The argument is `options | Array<options>`
