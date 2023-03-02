@@ -2,8 +2,15 @@ const getClassName = function(obj){
     return obj.name || (obj+"");
 };
 
+const isEmpty = function(obj){
+    for(let key in obj){
+        return false;
+    }
+    return true;
+};
 
-class ValidatorError{
+
+export class ValidatorError{
     //specifying the display order on console, do not remove
     msg;
     path = "";
@@ -61,6 +68,7 @@ class Base_Validator{
                     }else if(!res){
                         return new ValidatorError("Custom validation failed",obj,this.custom.toString().slice(0,50));
                     }else{
+                        console.log(res);
                         throw new Error("Unknown return value from custom validator",res);
                     }
                 }
@@ -97,7 +105,6 @@ class Instanceof_Validator extends Base_Validator{
         return new ValidationError(`Expected ${getClassName(this.type.name)}, but got ${getClassName(obj.constructor)} instead`,obj,this.type);
     }
 };
-
 
 class Object_Validator extends Base_Validator{
     constructor(options){
@@ -140,7 +147,7 @@ class Object_Validator extends Base_Validator{
         const {props_mandatory:mp,props_optional:op,props_any:ap} = this;
         for(let key in mp){
             if(!(key in obj)){
-                return new ValidatorError(`Mandatory property ${key} absent`,obj);
+                return new ValidatorError(`Mandatory property ${key} absent`,obj,key);
             }
             let res = mp[key].validate(obj[key])
             if(res instanceof ValidatorError){
@@ -157,7 +164,7 @@ class Object_Validator extends Base_Validator{
                     return res;
                 }
             }else if(!this.inclusive){
-                return new ValidatorError(`Unknown property ${key} in an exclusive context`,obj);
+                return new ValidatorError(`Unknown property ${key} in an exclusive context`,obj,key);
             }else{
                 let res = ap.validate(obj[key]);
                 if(res instanceof ValidatorError){
@@ -315,6 +322,14 @@ class String_Validator extends Base_Validator{
     }
 };
 
+class Wildcard_Validator extends Base_Validator{
+    constructor(rule){
+        super(rule || {});
+    }
+    validate(obj){
+        return true;
+    }
+}
 
 
 export class Validator{
@@ -329,7 +344,11 @@ export class Validator{
             rules = [rules];
         }
         for(let rule of rules){
-            if("type" in rule){
+            if(rule instanceof Validator){
+                this.schemas.push(rule);
+            }else if(isEmpty(rule)){
+                this.schemas.push(new Wildcard_Validator());
+            }else if("type" in rule){
                 const types = this.constructor.types;
                 if(rule.type in types){
                     this.schemas.push(new types[rule.type](rule));
@@ -339,8 +358,9 @@ export class Validator{
                     this.schemas.push(new Instanceof_Validator(rule));
                 }
             }else if("custom" in rule){
-                this.schemas.push(new Custom_Validator(rule));
+                this.schemas.push(new Wildcard_Validator(rule));
             }else{
+                console.log(rule);
                 throw new Error("Invalid rule");
             }
         }
@@ -355,7 +375,7 @@ export class Validator{
             if(res instanceof ValidatorError){
                 if(schemas.length > 1)
                     res.addPath(`{validator[${i}]}`,true);
-                if(!maxerr || maxerr.context.length < res.context.length){
+                if(!maxerr || maxerr.path.length < res.path.length){
                     maxerr = res;
                 }
             }else{
