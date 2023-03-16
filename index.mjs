@@ -2,6 +2,12 @@ const getClassName = function(obj){
     return obj.name || (obj+"");
 };
 
+const isEmpty = function(obj){
+    for(let key in obj){
+        return false;
+    }
+    return true;
+};
 
 class ValidatorError{
     //specifying the display order on console, do not remove
@@ -67,6 +73,15 @@ class Base_Validator{
                 return res;
             }.bind(this);
         }
+    }
+};
+
+class Wildcard_Validator extends Base_Validator{
+    constructor(){
+        super({});
+    }
+    validate(){
+        return true;
     }
 };
 
@@ -329,7 +344,9 @@ export class Validator{
             rules = [rules];
         }
         for(let rule of rules){
-            if("type" in rule){
+            if(isEmpty(rule)){
+                this.schemas.push(new Wildcard_Validator);
+            }else if("type" in rule){
                 const types = this.constructor.types;
                 if(rule.type in types){
                     this.schemas.push(new types[rule.type](rule));
